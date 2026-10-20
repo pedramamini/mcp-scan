@@ -13,6 +13,7 @@ import aiohttp
 import certifi
 import rich
 from mcp.types import Prompt, Resource, ResourceTemplate, Tool
+from rich.markup import escape
 
 from agent_scan.models.api.common import ScanUserInfo
 from agent_scan.models.api.v20260710 import (
@@ -106,13 +107,16 @@ def _warn_async_results_not_shown() -> None:
 
 def _print_scan_sent_success(user_info: ScanUserInfo) -> None:
     """Print confirmation that scan was sent with identity details."""
-    parts = []
+    parts: list[str] = []
     if user_info.identifier:
-        parts.append(f"machine id: {user_info.identifier}")
-    parts.append(f"hostname: {user_info.hostname}")
-    username = ", ".join(user_info.username) if isinstance(user_info.username, list) else str(user_info.username)
-    parts.append(f"user: {username}")
-    rich.print(f"[green]Scan sent successfully[/green] ({', '.join(parts)})")
+        parts.append(f"machine id: {escape(user_info.identifier)}")
+    if user_info.hostname:
+        parts.append(f"hostname: {escape(user_info.hostname)}")
+    if user_info.username:
+        username = ", ".join(escape(u) for u in user_info.username)
+        parts.append(f"user: {username}")
+    details = f" ({', '.join(parts)})" if parts else ""
+    rich.print(f"[green]Scan sent successfully[/green]{details}")
 
 
 async def _async_analysis_enabled(
