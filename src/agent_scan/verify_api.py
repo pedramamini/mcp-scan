@@ -241,7 +241,8 @@ async def _submit_async_analysis(
                         logger.error("Async analysis returned status %s; not retrying.", response.status)
                         return False, error_text, None
 
-                    last_error_text = f"Could not reach analysis server: {response.status} - {response.reason}"
+                    detail = await _response_detail(response) or response.reason
+                    last_error_text = f"Could not reach analysis server: {response.status} - {detail}"
                     logger.warning(
                         "Async analysis returned status %s (attempt %d/%d).",
                         response.status,

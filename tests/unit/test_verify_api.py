@@ -1241,13 +1241,15 @@ class TestSubmitAsyncAnalysis:
             patch("agent_scan.verify_api.aiohttp.ClientSession") as mock_cls,
             patch("agent_scan.verify_api.asyncio.sleep", new_callable=AsyncMock),
         ):
-            mock_cls.return_value = _make_post_session(status=503, reason="Service Unavailable")
+            mock_cls.return_value = _make_post_session(
+                status=503, json_data={"detail": "Failed to enqueue scan; retry later"}, reason="Service Unavailable"
+            )
             success, error_text, _ = await _submit_async_analysis(self._ASYNC_URL, payload, {}, "m", None, False, 3)
 
         assert success is False
         assert error_text == (
             "Tried calling verification api 3 times. Could not reach analysis server. "
-            "Last error: Could not reach analysis server: 503 - Service Unavailable"
+            "Last error: Could not reach analysis server: 503 - Failed to enqueue scan; retry later"
         )
 
     @pytest.mark.asyncio
