@@ -104,6 +104,17 @@ def _warn_async_results_not_shown() -> None:
     )
 
 
+def _print_scan_sent_success(user_info: ScanUserInfo) -> None:
+    """Print confirmation that scan was sent with identity details."""
+    parts = []
+    if user_info.identifier:
+        parts.append(f"machine id: {user_info.identifier}")
+    parts.append(f"hostname: {user_info.hostname}")
+    username = ", ".join(user_info.username) if isinstance(user_info.username, list) else str(user_info.username)
+    parts.append(f"user: {username}")
+    rich.print(f"[green]Scan sent successfully[/green] ({', '.join(parts)})")
+
+
 async def _async_analysis_enabled(
     config_url: str,
     push_key: str,
@@ -504,6 +515,7 @@ async def analyze_machine(
                     async_url, payload, headers, identifier, trace_configs, skip_ssl_verify, max_retries
                 )
                 _warn_async_results_not_shown()
+                _print_scan_sent_success(user_info)
                 return _accepted_async_response(payload)
     elif snyk_token:
         # CLI mode with SNYK_TOKEN environment variable for authentication

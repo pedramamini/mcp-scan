@@ -1265,7 +1265,7 @@ class TestAnalyzeMachineAsyncRouting:
     _ANALYSIS_URL = "https://api.snyk.io/hidden/mcp-scan/analysis-machine?version=2026-07-10"
 
     @pytest.mark.asyncio
-    async def test_async_enabled_submits_async_and_skips_sync(self):
+    async def test_async_enabled_submits_async_and_skips_sync(self, capsys):
         inspected_paths = [
             InspectedPath(
                 client="cursor",
@@ -1300,6 +1300,8 @@ class TestAnalyzeMachineAsyncRouting:
             ) as mock_enabled,
             patch("agent_scan.verify_api._submit_async_analysis", new_callable=AsyncMock) as mock_submit,
             patch("agent_scan.verify_api.aiohttp.ClientSession") as mock_session_class,
+            patch("agent_scan.verify_api.get_hostname", return_value="my-host"),
+            patch("agent_scan.verify_api.get_username", return_value="alice"),
         ):
             result = await analyze_machine(
                 inspected_paths=inspected_paths,
@@ -1307,6 +1309,10 @@ class TestAnalyzeMachineAsyncRouting:
                 identifier="id-1",
                 push_key="push-abc",
             )
+
+        captured = capsys.readouterr()
+        assert "Scan sent successfully (machine id: id-1, hostname: my-host, user: alice)" in captured.out
+        assert "Warning: This scan was submitted for asynchronous analysis" in captured.err
 
         mock_enabled.assert_awaited_once()
         mock_submit.assert_awaited_once()
