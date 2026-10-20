@@ -1214,6 +1214,25 @@ class TestSubmitAsyncAnalysis:
         assert error_text == "The analysis server returned an error for your request: 400 - Bad Request"
 
     @pytest.mark.asyncio
+    async def test_4xx_body_read_timeout_does_not_retry(self):
+        payload = MagicMock()
+        payload.model_dump_json.return_value = "{}"
+
+        with (
+            patch("agent_scan.verify_api.aiohttp.ClientSession") as mock_cls,
+            patch("agent_scan.verify_api.asyncio.sleep", new_callable=AsyncMock) as mock_sleep,
+        ):
+            session = _make_post_session(status=400, reason="Bad Request")
+            session.post.return_value.__aenter__.return_value.json = AsyncMock(side_effect=TimeoutError("slow"))
+            mock_cls.return_value = session
+            success, error_text, _ = await _submit_async_analysis(self._ASYNC_URL, payload, {}, "m", None, False)
+
+        assert success is False
+        assert error_text == "The analysis server returned an error for your request: 400 - Bad Request"
+        session.post.assert_called_once()
+        mock_sleep.assert_not_awaited()
+
+    @pytest.mark.asyncio
     async def test_5xx_exhausted_reports_retry_count_and_last_error(self):
         payload = MagicMock()
         payload.model_dump_json.return_value = "{}"

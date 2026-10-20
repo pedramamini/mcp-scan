@@ -173,7 +173,7 @@ async def _response_detail(response: aiohttp.ClientResponse) -> str | None:
     """Return the backend's `detail` error message, if any."""
     try:
         data = await response.json(content_type=None)
-    except (aiohttp.ClientError, ValueError):
+    except (aiohttp.ClientError, TimeoutError, ValueError):
         return None
     detail = data.get("detail") if isinstance(data, dict) else None
     return detail if isinstance(detail, str) and detail else None
