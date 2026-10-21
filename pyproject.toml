@@ -22,6 +22,7 @@ dependencies = [
     "mcp[cli]==1.30.0",
     "regex>=2026.2.19",
     "detect-secrets>=1.5.0",
+    "certifi>=2026.10.19",
     # TOML decoder for the Codex discoverer on Python 3.10 (stdlib ``tomllib`` is
     # 3.11+). Declared directly so the ``tomli`` fallback in ``agents/codex.py`` is
     # guaranteed under ``requires-python>=3.10`` rather than relying on a transitive.
@@ -40,7 +41,6 @@ override-dependencies = [
     "anyio>=4.14.2",
     "urllib3>=2.8.0",
     "multidict>=6.9.1",
-    "certifi>=2026.10.19",
 ]
 
 [project.scripts]

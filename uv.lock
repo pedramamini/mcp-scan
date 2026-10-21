@@ -11,7 +11,6 @@ resolution-markers = [
 [manifest]
 overrides = [
     { name = "anyio", specifier = ">=4.14.2" },
-    { name = "certifi", specifier = ">=2026.10.19" },
     { name = "click", specifier = ">=8.3.3" },
     { name = "idna", specifier = ">=3.15" },
     { name = "multidict", specifier = ">=6.9.1" },
@@ -2159,6 +2158,7 @@ version = "0.6.9"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
+    { name = "certifi" },
     { name = "detect-secrets" },
     { name = "lark" },
     { name = "mcp", extra = ["cli"] },
@@ -2189,6 +2189,7 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.14.4" },
+    { name = "certifi", specifier = ">=2026.10.19" },
     { name = "detect-secrets", specifier = ">=1.5.0" },
     { name = "lark", specifier = ">=1.1.9" },
     { name = "mcp", extras = ["cli"], specifier = "==1.30.0" },
