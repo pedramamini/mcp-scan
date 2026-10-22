@@ -6672,6 +6672,20 @@ class TestRunInstallSendsServersDiscovered:
         install.assert_not_called()
         send.assert_not_called()
 
+    def test_no_readable_home_directories_exits_with_error(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("PUSH_KEY", "headless-pk")
+        with (
+            patch(f"{_G}.get_readable_home_directories", return_value=[]),
+            patch(f"{_G}._install_hooks") as install,
+            patch(f"{_G}._send_servers_discovered_event") as send,
+        ):
+            with pytest.raises(SystemExit) as exc_info:
+                _run_install(self._args(tmp_path, file_override=False))
+
+        assert exc_info.value.code == 1
+        install.assert_not_called()
+        send.assert_not_called()
+
     def test_install_failure_revokes_minted_key_and_does_not_send(self, tmp_path, monkeypatch):
         monkeypatch.delenv("PUSH_KEY", raising=False)
         monkeypatch.setenv("SNYK_TOKEN", "token")

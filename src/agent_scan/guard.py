@@ -257,8 +257,14 @@ def _run_install(args) -> None:
     # has it. Non-managed installs always check the invoking user's home.
     if not getattr(args, "file", None) and (not managed or getattr(args, "check_installed", False)):
         home_dirs = [home for home, _username in get_readable_home_directories(all_users=managed)]
-        skipped = [c for c in clients if not _is_client_installed(c, home_dirs)]
-        clients = [c for c in clients if _is_client_installed(c, home_dirs)]
+        if not home_dirs:
+            # get_readable_home_directories swallows enumeration errors and returns [],
+            # which would otherwise skip every client and silently install nothing.
+            rich.print("[bold red]Error:[/bold red] Could not find any readable user home directory.")
+            sys.exit(1)
+        installed_by_client = {c: _is_client_installed(c, home_dirs) for c in clients}
+        skipped = [c for c in clients if not installed_by_client[c]]
+        clients = [c for c in clients if installed_by_client[c]]
         for c in skipped:
             rich.print(
                 f"[yellow]Warning:[/yellow] {_client_label(c)} is not installed on this machine. "
