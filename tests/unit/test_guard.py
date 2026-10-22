@@ -7515,8 +7515,15 @@ class TestRunInstallSkipsUninstalledClients:
         assert "not installed" in out.lower()
 
     @staticmethod
-    def _managed_args(client):
-        return SimpleNamespace(client=client, url="https://api.snyk.io", tenant_id="tid-1", file=None, managed=True)
+    def _managed_args(client, check_installed=True):
+        return SimpleNamespace(
+            client=client,
+            url="https://api.snyk.io",
+            tenant_id="tid-1",
+            file=None,
+            managed=True,
+            check_installed=check_installed,
+        )
 
     @patch("agent_scan.guard._install_hooks")
     @patch("agent_scan.guard.mint_push_key", return_value="minted-pk")
@@ -7556,6 +7563,21 @@ class TestRunInstallSkipsUninstalledClients:
         mock_mint.assert_not_called()
         mock_install.assert_not_called()
         assert "not installed" in capsys.readouterr().out.lower()
+
+    @pytest.mark.parametrize("client", ["claude", "codex", "all"])
+    @patch("agent_scan.guard._install_hooks")
+    @patch("agent_scan.guard.mint_push_key", return_value="minted-pk")
+    @patch("agent_scan.guard.fetch_guard_enabled", return_value=True)
+    def test_managed_install_does_not_check_installed_by_default(
+        self, mock_fetch, mock_mint, mock_install, tmp_path, monkeypatch, capsys, client
+    ):
+        monkeypatch.delenv("PUSH_KEY", raising=False)
+        monkeypatch.setenv("SNYK_TOKEN", "tok")
+        with _fake_homes(tmp_path, []) as get_homes, patch("agent_scan.guard._preflight_writable"):
+            _run_install(self._managed_args(client, check_installed=False))
+        get_homes.assert_not_called()
+        assert mock_install.called, "managed install was skipped"
+        assert "not installed" not in capsys.readouterr().out.lower()
 
     @patch("agent_scan.guard._install_hooks")
     @patch("agent_scan.guard.mint_push_key", return_value="minted-pk")

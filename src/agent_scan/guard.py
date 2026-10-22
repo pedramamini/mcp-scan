@@ -252,9 +252,10 @@ def _run_install(args) -> None:
 
     # Filter out clients whose agent is not installed on this machine.
     # Skipped when --file is explicitly provided (the caller knows where to write).
-    # A managed install writes to a system-wide path, so the agent counts as installed
-    # when any user's home has it; otherwise only the invoking user's home is checked.
-    if not getattr(args, "file", None):
+    # A managed install writes to a system-wide path, so it is only checked when
+    # --check-installed is set; the agent then counts as installed when any user's home
+    # has it. Non-managed installs always check the invoking user's home.
+    if not getattr(args, "file", None) and (not managed or getattr(args, "check_installed", False)):
         home_dirs = [home for home, _username in get_readable_home_directories(all_users=managed)]
         skipped = [c for c in clients if not _is_client_installed(c, home_dirs)]
         clients = [c for c in clients if _is_client_installed(c, home_dirs)]
