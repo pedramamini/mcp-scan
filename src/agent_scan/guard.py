@@ -1090,11 +1090,17 @@ def _uninstall_single_client(client: str, args, managed: bool) -> None:
 
 def _try_revoke_push_key(info: dict, label: str) -> None:
     push_key = info.get("auth_value", "")
-    tenant_id = info.get("tenant_id", "")
+    tenant_id = info.get("tenant_id", "") or os.environ.get("TENANT_ID", "").strip()
     url = info.get("url", DEFAULT_REMOTE_URL)
     snyk_token = os.environ.get("SNYK_TOKEN", "")
 
-    if not tenant_id or not snyk_token:
+    if not tenant_id:
+        rich.print(
+            f"[dim]   Push key {_mask_key(push_key)} was not revoked "
+            "(Tenant ID not found in the installed hook; set TENANT_ID to revoke on uninstall).[/dim]"
+        )
+        return
+    if not snyk_token:
         rich.print(
             f"[dim]   Push key {_mask_key(push_key)} was not revoked (set SNYK_TOKEN to revoke on uninstall).[/dim]"
         )
@@ -1666,6 +1672,7 @@ def _parse_command_info(cmd: str, events: list[str]) -> dict:
 _PS_PARAM_MAP = {
     "PUSH_KEY": "PushKey",
     "REMOTE_HOOKS_BASE_URL": "RemoteUrl",
+    "TENANT_ID": "TenantId",
 }
 
 
@@ -1824,6 +1831,8 @@ def _render_powershell_command(invocation: _HookInvocation) -> str:
         "-RemoteUrl",
         _ps_quote(invocation.url),
     ]
+    if invocation.tenant_id:
+        parts.extend(["-TenantId", _ps_quote(invocation.tenant_id)])
     if invocation.machine_id:
         parts.extend(["-MachineId", _ps_quote(invocation.machine_id)])
     if invocation.agent_scan_command:
@@ -1951,6 +1960,7 @@ def _build_hook_command_powershell(
             push_key=push_key,
             url=url,
             machine_id=machine_id,
+            tenant_id=tenant_id,
         )
     )
 
